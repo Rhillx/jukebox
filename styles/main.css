@@ -1,0 +1,6 @@
+.sideContainer{
+	width: 100px;
+	min-height: auto;
+	/*float: left;*/
+	border: 2px solid black;
+}
