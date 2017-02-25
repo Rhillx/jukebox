@@ -5,30 +5,51 @@
 	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.7/semantic.min.css">
 	<link rel="stylesheet" type="text/css" href="styles/main.css">
 </head>
-<body>
+<body id="app">
 
-<div class="ui container">
-	<h1>Spotify Jukebox</h1>
-	<div class="ui fluid action input">
-  		<input type="text" placeholder="Search..." class="js-input">
-  		<div class="ui button js-searchBtn">Search</div>
+<div class="ui very thin sidebar stackable two wide column inverted menu visible">
+   		 <div class="ui diveded items js-playlist">
+    	
+   		 </div>
+ 	 </div>
+
+
+<div class="pusher">
+	<div class="ui two column grid centered">
+
+	<!-- <div class="ui top attached inverted menu"> -->
+		<div class="column">
+			<div class="ui fluid action input">
+				<input type="text" placeholder="Search..." class="js-input">
+				<button class="ui button js-search">Search</button>
+			</div><!-- end input -->
+
+		</div><!-- column -->
+
+
+	<div class="ui link cards centered js-searchresult">
+	
 	</div>
+	
+	</div><!-- end ui two column centered grid -->
 
-	<div class="ui internally celled grid">
-  <div class="row">
-    <div class="three wide column js-playlistContainer">
-      <img>
-    </div>
-    <div class="ten wide column js-resultsContainer">
-      <p></p>
-    </div>
-  </div>
-</div>
+		
+	</div><!-- end pusher class-->
+	
+	
+  	
+    <!-- Site content !-->
+ 
 
+	
 
+	
+
+	
 
 
 
 <script src="javascript/app.js"></script>
+<script src="javascript/playListManager.js"></script>
 </body>
 </html>

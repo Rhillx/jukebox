@@ -28,26 +28,23 @@ access token : BQCHFSra-0Y4PSqrUxmKLke6qH35wiMVqzf9V_tu1G0-deEExYF7BOWblU_VGMEz8
 (function (){
 
 
-const input= document.querySelector('.js-input')
-const button= document.querySelector('.js-searchBtn')
-const playlistPanel= document.querySelector('.js-playlistContainer')
-const resultPanel= document.querySelector('.js-resultsContainer')
+	const input= document.querySelector('.js-input')
+	const button= document.querySelector('.js-search')
+	const playlist= document.querySelector('.js-playlist')
+	const results= document.querySelector('.js-searchresult')
 
+	let playList=[];
 
-
-button.addEventListener('click', (e)=> validSearch());
-input.addEventListener('keydown',(e) => {
+	button.addEventListener('click', (e)=> validSearch());
+	input.addEventListener('keydown',(e) => {
 		if (e.keyCode === 13){
-		 validSearch()
-		 
-		 return
-
+			validSearch();
+		 	return;
 		}
+	});
 
-	})
-
-function validSearch (){
-	const searchTerm = input.value;
+	function validSearch (){
+		const searchTerm = input.value;
 
 		if (searchTerm.trim() === "") {
 			alert('Please input a value!')
@@ -58,60 +55,153 @@ function validSearch (){
 		button.setAttribute('disabled', 'disabled'); 
 		// WHY DOESNT BUTTON DISABLE???
 
-		spotifySearch(searchTerm, "track", dataReturn)
-			
-}
+		spotifySearch(searchTerm, "artist,album,track" )
+			.then((data)=> { 
 
-const reqParam = () => {
-	throw new error('THIS IS A REQUIRED PARAM!')
-};
+				input.removeAttribute('disabled', 'disabled')
+				button.removeAttribute('disabled','disabled')
 
-const spotifySearch = (q = reqParam(), type, callback, limit =10, offset =0) =>{
-	let url = 'http://api.spotify.com/v1/search?'
-
-	url += '&q=' + q;
-
-	url += '&type=' + type;
-
-	url += '&offset=' + offset;
-
-	url += '&limit=' + limit;
-
-
-
-	const http= new XMLHttpRequest();
-
-	http.onreadystatechange = () => {
-			const isReqReady = http.readyState === XMLHttpRequest.DONE;
-			const isReqDone = http.status === 200;
-
-			if (isReqReady && isReqDone) {
-				const data = JSON.parse(http.responseText);
-				data.searchTerm = q;
-
-      			callback(data);
-      		}
-      	}
-
-      	http.open('GET', url);
-      	http.send()
-      }
-
-const dataReturn = (data)=>{
-	const searchTerm = data.searchTerm;
-
-	resultPanel.innerHTML="";
-
-	for(const trackData of data.tracks.items){
-		const trackId = trackData.id;
-
+				results.innerHTML= "";
+				
+   				for(const track of data.tracks.items){
+   					// console.log(track)
+   				 	addTrackHtml(track);
+   				}
+   			 	
+			})		
 	}
 
+	const reqParam = () => {
+		throw new error('THIS IS A REQUIRED PARAM!')
+	};
+
+	const spotifySearch = (q = reqParam(), type, limit =12, offset =0) =>{
+
+		return new Promise ((resolve, reject) =>{
+			let url = 'http://api.spotify.com/v1/search?'
+
+			url += '&q=' + q;
+			url += '&type=' + type;
+			url += '&offset=' + offset;
+			url += '&limit=' + limit;
 
 
-}
+			const http= new XMLHttpRequest();
+
+			http.onreadystatechange = () => {
+				const isReqReady = http.readyState === XMLHttpRequest.DONE;
+				const isReqDone = http.status === 200;
+
+				if (isReqReady && isReqDone) {
+					const data = JSON.parse(http.responseText);
+					data.searchTerm = q;
+
+	      			resolve(data);
+	      		}
+      		}
+
+	      	http.open('GET', url);
+	      	http.send()
+      	});
+	};
+
+	const addTrackHtml = (track)=>{
+		const {name, preview_url, id, album} = track;
+        const imageUrl = album.images[1].url;
+
+        const div = document.createElement('div');
+        div.classList.add('ui','teal','card', 'dimmable');
+        div.innerHTML = getCardMarkup(name, preview_url, id, album, imageUrl);;
+        results.appendChild(div);
+	
+
+		div.addEventListener('click',() => {
+            PlaylistManager.addTrack(track);
+            const currentIndex = PlaylistManager.tracks.length - 1;
+            // console.log(currentIndex);
+
+            const playlistTrack = document.createElement('div');
+            playlistTrack.classList.add('ui','centered', 'card', 'trackid-' + id);
+            playlistTrack.innerHTML = `
+<div class="item playlist-track trackid-${id}">
+    <a href="#" class="playlist-close js-playlist-close">
+        <i class="icon remove"></i>
+    </a>
+    <div class="ui tiny image">
+      <img src="${imageUrl}">
+    </div>
+    <div class="middle aligned content playlist-content">
+      ${name}
+    </div>
+</div>
+        <audio controls style="width: 100%;">
+            <source src="${preview_url}">
+        </audio>
+            `
+            playlist.appendChild(playlistTrack)
+
+            // get the AUDIO tag
+            const audio = playlistTrack.querySelector('audio');
+
+            audio.addEventListener('play', () => {
+                PlaylistManager.currentSong = currentIndex;
+            });
+
+            audio.addEventListener('ended', () => {
+                console.log('done!')
+                const nextTrackId = PlaylistManager.getNextSong();
+
+                setTimeout(() => {
+                    document.querySelector(`.trackid-${nextTrackId} audio`).play();
+                }, 1000);
+                
+            })
 
 
+            // get the CLOSE button
+           const closeBtn = playlistTrack.querySelector('.js-playlist-close');
+           closeBtn.addEventListener('click', () => {
+                if (PlaylistManager.currentSong === currentIndex) {
+                    const nextTrackId = PlaylistManager.getNextSong();
+
+                    setTimeout(() => {
+                        document.querySelector(`.trackid-${nextTrackId} audio`).play();
+                    }, 500);
+                }
+                PlaylistManager.removeById(id);
+
+                playlist.removeChild(playlistTrack);
+           })
+        })
+        // console.log(html)
+    }
+
+
+
+
+
+
+
+
+	 const getCardMarkup = (name, preview_url, id, album, imageUrl) => {
+        let html = `
+            <div class="image">
+                <img src="${imageUrl}">
+            </div>
+            <div class="content">
+                <a class="header">${name}</a>
+                <div class="meta">${album.name}</div>
+                <div class="description">
+                    <audio controls class="${id}" style="width: 100%;">
+                        <source src="${preview_url}">
+                    </audio>
+                </div>
+            </div>
+        `;
+
+        return html;
+    }
+	
 
 })();
 
